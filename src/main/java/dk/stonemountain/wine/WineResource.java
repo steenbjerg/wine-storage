@@ -1,10 +1,8 @@
 package dk.stonemountain.wine;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 
@@ -106,7 +104,7 @@ public class WineResource {
         @Parameter(name = "size") @QueryParam("size") @DefaultValue("20") int pageSize,
         @Parameter(
             name = "order",
-            description = "Order by values are repeated parameteres, e.g. ?order=year:asc&order&order=country:desc"
+            description = "Order by values are repeated parameters, e.g. ?order=year:asc&order&order=country:desc"
         ) @QueryParam("order") List<String> orderQuery,
         @Parameter(
             name = "filter",
@@ -167,17 +165,14 @@ public class WineResource {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response getImage(@NotNull @PathParam("id") Long id, @QueryParam("icon") @DefaultValue("false") Boolean icon) {
         LOG.info("Fetching image for wine {} (is icon {})", id, icon);
-        StreamingOutput stream = out -> {
-            QuarkusTransaction.requiringNew().run(() -> {
-                final var wine = service.findById(id);
-                final var imageStream = service.getImage(wine, icon);
-                try (InputStream in = imageStream) {
-                    in.transferTo(out);
-                } catch(IOException e){
-                    throw new RuntimeException("failed to transfer image", e);
-                }
-            });
-        };
+        StreamingOutput stream = out -> QuarkusTransaction.requiringNew().run(() -> {
+            final var wine = service.findById(id);
+            try (InputStream in = service.getImage(wine, icon)) {
+                in.transferTo(out);
+            } catch(IOException e){
+                throw new RuntimeException("failed to transfer image", e);
+            }
+        });
 
         return Response.ok(stream)
             .header("Content-Disposition", "attachment; filename=\"" + "image_" + id + ".png" + "\"")
@@ -187,7 +182,7 @@ public class WineResource {
     @POST
     @Path("/{id}/image")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
-    public void upload(@PathParam("id") Long id, File image) throws Exception {
+    public void upload(@PathParam("id") Long id, File image) {
         final var wine = service.findById(id);
         service.putImage(wine, image);
     }
