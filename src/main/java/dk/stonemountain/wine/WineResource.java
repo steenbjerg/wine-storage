@@ -54,6 +54,7 @@ public class WineResource {
     @Path("{id}")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "findById", summary = "Find wine by ID", description = "Returns a wine by its ID")
+    @Parameter(name = "id", description = "Unique wine identifier", example = "42")
     @APIResponse(
         responseCode = "200",
         description = "Wine found",
@@ -85,10 +86,7 @@ public class WineResource {
         description = "Wines found",
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
-            schema = @Schema(
-                type = org.eclipse.microprofile.openapi.annotations.enums.SchemaType.ARRAY,
-                implementation = WineDTO.class
-            )
+            schema = @Schema(implementation = WineDTO[].class)
         )
     )
     @APIResponse(
@@ -100,15 +98,17 @@ public class WineResource {
         )
     )
     public List<WineDTO> list(
-        @Parameter(name = "start-index") @QueryParam("start-index") @DefaultValue("0") int pageIndex,
-        @Parameter(name = "size") @QueryParam("size") @DefaultValue("20") int pageSize,
+        @Parameter(name = "start-index", description = "Zero-based page index", example = "0") @QueryParam("start-index") @DefaultValue("0") int pageIndex,
+        @Parameter(name = "size", description = "Page size (max items per page)", example = "20") @QueryParam("size") @DefaultValue("20") int pageSize,
         @Parameter(
             name = "order",
-            description = "Order by values are repeated parameters, e.g. ?order=year:asc&order&order=country:desc"
+            description = "Sorting as repeated params: field[:asc|desc], e.g. order=year:asc&order=country:desc",
+            example = "year:asc"
         ) @QueryParam("order") List<String> orderQuery,
         @Parameter(
             name = "filter",
-            description = "Filter values as repeated query parameters, e.g. ?filter=name:Merlot&filter=country:France"
+            description = "Filtering as repeated params: field:value, e.g. filter=name:Merlot&filter=country:France",
+            example = "country:France"
         ) @QueryParam("filter") List<String> filterQuery
     ) {
         LOG.info(
@@ -163,6 +163,11 @@ public class WineResource {
     @GET
     @Path("/{id}/images")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Operation(summary = "Download wine image", description = "Streams the wine image as a binary file")
+    @Parameter(name = "id", description = "Unique wine identifier", example = "42")
+    @Parameter(name = "icon", description = "If true, return a small icon-sized image", example = "false")
+    @APIResponse(responseCode = "200", description = "Image stream", content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM))
+    @APIResponse(responseCode = "404", description = "Wine or image not found")
     public Response getImage(@NotNull @PathParam("id") Long id, @QueryParam("icon") @DefaultValue("false") Boolean icon) {
         LOG.info("Fetching image for wine {} (is icon {})", id, icon);
         StreamingOutput stream = out -> QuarkusTransaction.requiringNew().run(() -> {
@@ -182,6 +187,10 @@ public class WineResource {
     @POST
     @Path("/{id}/image")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    @Operation(summary = "Upload wine image", description = "Uploads/replaces the wine image from binary content")
+    @Parameter(name = "id", description = "Unique wine identifier", example = "42")
+    @APIResponse(responseCode = "204", description = "Uploaded")
+    @APIResponse(responseCode = "404", description = "Wine not found")
     public void upload(@PathParam("id") Long id, File image) {
         final var wine = service.findById(id);
         service.putImage(wine, image);
