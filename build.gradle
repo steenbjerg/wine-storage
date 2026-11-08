@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'io.quarkus'
+    // id 'eclipse'
 }
 
 repositories {
@@ -14,6 +15,7 @@ dependencies {
     implementation 'io.quarkus:quarkus-rest-jsonb'
     implementation 'io.quarkus:quarkus-hibernate-orm-panache'
     implementation 'io.quarkus:quarkus-smallrye-health'
+    implementation 'io.quarkus:quarkus-smallrye-openapi'
     implementation 'io.quarkus:quarkus-jdbc-postgresql'
     implementation 'io.quarkus:quarkus-micrometer'
     implementation 'io.quarkus:quarkus-arc'
@@ -39,3 +41,11 @@ compileJava {
 compileTestJava {
     options.encoding = 'UTF-8'
 }
+
+// eclipse {
+//     classpath {
+//         // Help the IDE index sources/javadoc for dependencies
+//         downloadSources = true
+//         downloadJavadoc = true
+//     }
+// }

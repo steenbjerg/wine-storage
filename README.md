@@ -6,13 +6,30 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 
 ## Running the application in dev mode
 
-You can run your application in dev mode that enables live coding using:
+First, ensure you have the `DOCKER_HOST` environment variable set to the correct value for your Docker socket.
+
+```shell script
+export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock
+```
+Define it in the terminal used for running the application.
+
+Second, make sure you have the `~/.testcontainers.properties` file configured with the correct values for your test containers:
+
+```properties
+docker.host=unix:///run/user/1000/podman/podman.sock
+```
+
+Run your application in dev mode:
 
 ```shell script
 ./gradlew quarkusDev
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+Use this command to find the port for postgresql:
+
+```shell script
+podman ps
+```
 
 ## Packaging and running the application
 
