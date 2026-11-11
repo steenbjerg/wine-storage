@@ -53,4 +53,23 @@ public record WineDTO(
             wine.rating
         );
     }
+
+    public void toDomain(Wine wine) {
+        wine.id = id();
+        wine.name = name();
+        wine.year = year();
+        wine.type = type().getDomainType();
+        wine.country = country().getDomainType();
+        wine.region = region();
+        wine.grape = grape();
+        wine.alcoholPercentage = alcoholPercentage();
+        wine.vendor = vendor();
+        wine.vendorUrl = vendorUrl();
+        wine.vendorDescription = vendorDescription();
+        wine.purchaseDate = purchaseDate();
+        wine.purchasePrice = new Price(purchasePrice().cost(), purchasePrice().pieces());
+        wine.inStock = inStock();
+        wine.note = note();
+        wine.rating = rating();
+    }
 }

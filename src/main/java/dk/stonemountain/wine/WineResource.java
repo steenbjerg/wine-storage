@@ -29,9 +29,11 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -129,36 +131,64 @@ public class WineResource {
         return Sort.by(sortQuery.toArray(new String[0]));
     }
 
-    // @Transactional
-    // @POST
-    // @Consumes(MediaType.APPLICATION_JSON)
-    // @Produces(MediaType.APPLICATION_JSON)
-    // public RestResponse<Wine> add(Wine wine) {
-    //     service.persist(wine);
-    //     return wine;0
-    //     // ... build a new location URL and return 201 response with an entity
-    // }
+    @Transactional
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(operationId = "add", summary = "Add wine", description = "Creates a new wine")
+    @APIResponse(
+        responseCode = "200",
+        description = "Wine created",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Wine.class))
+    )
+    public Wine add(Wine wine) {
+        service.persist(wine);
+        return wine;
+    }
 
-    // @Transactional
-    // @PUT
-    // @Path("{id}")
-    // @Consumes(MediaType.APPLICATION_JSON)
-    // @Produces(MediaType.APPLICATION_JSON)
-    // public RestResponse<Wine> update(@PathParam("id") Long id, Wine WineToSave) {
-    //     if (service.get(id) == null) {
-    //         Wine Wine = service.update(id, WineToSave);
-    //         return ResponseBuilder.<Wine>create(204).build();
-    //     }
-    //     Wine Wine = service.update(id, WineToSave);
-    //     // ... build a new location URL and return 201 response with an entity
-    // }
+    @Transactional
+    @PUT
+    @Path("{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(operationId = "update", summary = "Update wine", description = "Updates an existing wine by its ID")
+    @Parameter(name = "id", description = "Unique wine identifier", example = "42")
+    @APIResponse(
+        responseCode = "200",
+        description = "Wine updated",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Wine.class))
+    )
+    @APIResponse(responseCode = "204", description = "Wine not found")
+    public Wine update(@PathParam("id") Long id, WineDTO wineToSave) {
+        Wine wine = service.findById(id);
+        if (wine != null) {
+            wineToSave.toDomain(wine);
+            service.persist(wine);
+            return wine;
+        } else {
+            throw new EntityNotFoundException(id, Wine.class);
+        }
+    }
 
-    // @Transactional
-    // @DELETE
-    // @Path("{id}")
-    // public RestResponse<Wine> delete(@PathParam("id") Long id) {
-    //     return !service.delete(id) ? ResponseBuilder.<Wine>create(404).build() : ResponseBuilder.<Wine>create(204).build();
-    // }
+    @Transactional
+    @DELETE
+    @Path("{id}")
+    @Operation(operationId = "delete", summary = "Delete wine", description = "Deletes an existing wine by its ID")
+    @Parameter(name = "id", description = "Unique wine identifier", example = "42")
+    @APIResponse(
+        responseCode = "200",
+        description = "Wine deleted",
+        content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Wine.class))
+    )
+    @APIResponse(responseCode = "404", description = "Wine not found")
+    public void delete(@PathParam("id") Long id) {
+        Wine wine = service.findById(id);
+        if (wine != null) {
+            service.delete(wine);
+        } else {
+            throw new EntityNotFoundException(id, Wine.class);
+        }
+    }
 
     @GET
     @Path("/{id}/images")
